@@ -1,0 +1,1 @@
+export const ROOT_TAG_NAME = '__ROOT__';

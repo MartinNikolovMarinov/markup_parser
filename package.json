@@ -1,0 +1,11 @@
+{
+  "name": "markup_parser",
+  "version": "1.0.0",
+  "description": "Simple Markup Parser",
+  "main": "index.js",
+  "scripts": {
+    "start": "tsc -w"
+  },
+  "author": "",
+  "license": "ISC"
+}
