@@ -2,10 +2,10 @@ import { MarkupParser } from './markup_parser';
 import { nop } from './node_operator';
 
 let parser = new MarkupParser({
-  selfCLosingTags: ['img', 'a'],
+  selfCLosingTags: ['img'],
   nop: nop
 });
-let ret = parser.parse('</a>');
+let ret = parser.parse('<p >ab <img />PACA< img >cd</p  >');
 let html = nop.toHtml(ret);
 console.log(html);
 

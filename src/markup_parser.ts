@@ -6,11 +6,6 @@ import {
   notWhiteSpace,
 } from './util'
 
-let parseFlags = {
-  isEscaped: false,
-  isNested: false
-}
-
 enum StateEnum {
   OutOFAllTags = 1,
   InOpeningTag = 2, // (found <)
@@ -22,41 +17,83 @@ enum StateEnum {
   InEscapedTagBody = 8
 }
 
-function changeState(curr: StateEnum, symbol: string, nextSymbol: string): StateEnum {
-  if (curr === StateEnum.OutOFAllTags && symbol === '<') {
-    return StateEnum.InOpeningTag;
-  } else if (curr === StateEnum.InOpeningTag && notWhiteSpace(symbol)) {
-    if (symbol === '>')
-      throw new Error(em.TAGNAME_IS_EMPTY());
-    else
-      return StateEnum.InTagName;
-  } else if (curr === StateEnum.InTagName && isWhiteSpace(symbol)) {
-    return StateEnum.InOpeningTagWhiteSpace;
-  } else if (curr === StateEnum.InOpeningTagWhiteSpace && isLetter(symbol)) {
-    return StateEnum.InAttribute;
-  } else if ((curr === StateEnum.InAttribute ||  // <a href='b'>..
-    curr === StateEnum.InOpeningTagWhiteSpace || // <a href='b' > && <a  >..
-    curr === StateEnum.InTagName) && // <a>..
-    notWhiteSpace(symbol) &&
-    symbol === '>'
-  ) {
-    if (parseFlags.isEscaped)
-      return StateEnum.InEscapedTagBody;
-    else
-      return StateEnum.InTagBody;
-  } else if (curr === StateEnum.InTagBody && symbol + nextSymbol === '</') {
-    return StateEnum.InClosingTag;
-  } else if (curr === StateEnum.InTagBody && symbol === '<' && !parseFlags.isEscaped) {
-    parseFlags.isNested = true;
-  return StateEnum.InOpeningTag;
-  } else if (curr === StateEnum.InClosingTag && symbol === '>') {
-    if (parseFlags.isNested)
-      return StateEnum.InTagBody;
-    else
-      return StateEnum.OutOFAllTags;
-  } else {
-    return curr;
+type StateCallback = (props: StateChangeProps) => StateEnum;
+type ParseFlags = { isEscaped: boolean, isNested: boolean }
+type StateChangeProps = {
+  curr: StateEnum,
+  symbol: string,
+  parseFlags: ParseFlags,
+  prev: StateEnum,
+  nextSymbol: string,
+  currNode: mp.ElementNode
+}
+
+let parseStates: { [state: number]: StateCallback } = {};
+
+parseStates[StateEnum.OutOFAllTags] = (scProps) => {
+  if (scProps.symbol === '<') return StateEnum.InOpeningTag
+  else return scProps.curr
+};
+parseStates[StateEnum.InOpeningTag] = (scProps) => {
+  if (notWhiteSpace(scProps.symbol)) {
+    if (scProps.symbol === '>') throw new Error(em.TAGNAME_IS_EMPTY());
+    else return StateEnum.InTagName;
   }
+
+  return scProps.curr
+};
+parseStates[StateEnum.InTagName] = (scProps) => {
+  if (notWhiteSpace(scProps.symbol) && scProps.symbol === '>') {
+    if (scProps.parseFlags.isEscaped) return StateEnum.InEscapedTagBody;
+    else return StateEnum.InTagBody;
+  }
+
+  if (isWhiteSpace(scProps.symbol)) return StateEnum.InOpeningTagWhiteSpace;
+
+  return scProps.curr
+};
+parseStates[StateEnum.InOpeningTagWhiteSpace] = (scProps) => {
+  if (notWhiteSpace(scProps.symbol) && scProps.symbol === '>') {
+    if (scProps.parseFlags.isEscaped) return StateEnum.InEscapedTagBody;
+    else return StateEnum.InTagBody;
+  }
+
+  if (isLetter(scProps.symbol)) return StateEnum.InAttribute;
+
+  return scProps.curr
+};
+parseStates[StateEnum.InAttribute] = (scProps) => {
+  if (notWhiteSpace(scProps.symbol) && scProps.symbol === '>') {
+    if (scProps.parseFlags.isEscaped) return StateEnum.InEscapedTagBody;
+    else return StateEnum.InTagBody;
+  }
+
+  if (notWhiteSpace(scProps.symbol)) return StateEnum.InAttribute;
+
+  return scProps.curr;
+};
+parseStates[StateEnum.InTagBody] = (scProps) => {
+  if (scProps.symbol + scProps.nextSymbol === '</') {
+    return StateEnum.InClosingTag;
+  }
+
+  if (scProps.symbol === '<' && !scProps.parseFlags.isEscaped) {
+    scProps.parseFlags.isNested = true;
+    return StateEnum.InOpeningTag;
+  }
+
+  return scProps.curr;
+};
+parseStates[StateEnum.InClosingTag] = (scProps) => {
+  if (scProps.symbol === '>') {
+    if (scProps.currNode.parent.tagName === ROOT_TAG_NAME)
+      scProps.parseFlags.isNested = false;
+
+    if (scProps.parseFlags.isNested) return StateEnum.InTagBody;
+    else return StateEnum.OutOFAllTags;
+  }
+
+  return scProps.curr
 }
 
 export class MarkupParser implements mp.MarkupParser {
@@ -70,7 +107,13 @@ export class MarkupParser implements mp.MarkupParser {
     if (!this.opts)
       throw new Error('Options not set. Please provide a correct opts object.');
 
+    const input = raw.split('\n');
     const { selfCLosingTags, nop } = this.opts;
+    const parseFlags: ParseFlags = {
+      isEscaped: false,
+      isNested: false
+    }
+
     let ret = <mp.MarkupTree>{
       root: nop.init(),
       selfCLosingTags: selfCLosingTags,
@@ -78,7 +121,6 @@ export class MarkupParser implements mp.MarkupParser {
     };
     ret.root.tagName = ROOT_TAG_NAME;
 
-    let input = raw.split('\n');
     let state = StateEnum.OutOFAllTags;
     let currNode: mp.ElementNode = ret.root;
 
@@ -90,7 +132,15 @@ export class MarkupParser implements mp.MarkupParser {
           let prevState = state;
           let notInTag;
 
-          state = changeState(state, symbol, nextSymbol);
+          state = parseStates[state].call(this, <StateChangeProps>{
+            curr: state,
+            prev: prevState,
+            symbol: symbol,
+            nextSymbol: nextSymbol,
+            currNode: currNode,
+            parseFlags: parseFlags
+          });
+
           const stateStr = StateEnum[state];
           const prevStateStr = StateEnum[prevState];
           notInTag = [
@@ -104,17 +154,16 @@ export class MarkupParser implements mp.MarkupParser {
             nop.add(currNode, newEl);
             currNode = newEl;
           } else if (symbol + nextSymbol === '/>' && !notInTag) {
-            if (selfCLosingTags.indexOf(currNode.tagName) >= 0) {
-              if (currNode.parent.tagName === ROOT_TAG_NAME) parseFlags.isNested = false;
+            if (this.isSelfClosing(currNode.tagName)) {
+              // this.extractAttributes(currNode);
               currNode = currNode.parent;
             } else {
               throw new Error(em.UNEXPECTED_SEQUENCE('/>'))
             }
           } else if (symbol === '>' && notInTag) {
-            if (prevState === StateEnum.InClosingTag ||
-              selfCLosingTags.indexOf(currNode.tagName) >= 0
-            ) {
-              if (currNode.parent.tagName === ROOT_TAG_NAME) parseFlags.isNested = false;
+            const inClosing = (prevState === StateEnum.InClosingTag);
+            if (inClosing || this.isSelfClosing(currNode.tagName)) {
+              // this.extractAttributes(currNode);
               currNode = currNode.parent;
             }
           } else if (state === StateEnum.InTagName && notWhiteSpace(symbol)) {
@@ -131,5 +180,9 @@ export class MarkupParser implements mp.MarkupParser {
     }
 
     return ret;
+  }
+
+  private isSelfClosing (tagName: string): boolean {
+    return this.opts.selfCLosingTags.indexOf(tagName) >= 0;
   }
 }
