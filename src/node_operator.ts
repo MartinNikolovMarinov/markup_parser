@@ -10,7 +10,6 @@ class NodeOperator implements mp.NodeOperator {
       tagName: '',
       children: [],
       parent: null,
-      attrBuffer: '',
       attributes: []
     }
   }
@@ -50,7 +49,7 @@ class NodeOperator implements mp.NodeOperator {
   }
 
   private _toHtml(node: mp.ElementNode, selfClosingTags: string[]): void {
-    const openTag = `<${node.tagName}>`;
+    const openTag = `<${node.tagName}${this.extractAttr(node)}>`;
     const closeTag = `</${node.tagName}>`;
 
     if(selfClosingTags.indexOf(node.tagName) >= 0) {
@@ -67,6 +66,22 @@ class NodeOperator implements mp.NodeOperator {
         this.buffer += (c as mp.TextNode).content;
     }
     if (node.tagName !== ROOT_TAG_NAME) this.buffer += closeTag;
+  }
+
+  private extractAttr(node: mp.ElementNode) {
+    if (node.attributes.length <= 0) return '';
+
+    let buffer = ' ';
+    for (let i = 0; i < node.attributes.length; i++) {
+      const attr = node.attributes[i];
+      const printedDelimiter = attr.delimiter === ' ' ? '' : attr.delimiter;
+      if (i === node.attributes.length - 1)
+        buffer += `${attr.key}=${printedDelimiter}${attr.value}${printedDelimiter}`;
+      else
+        buffer += `${attr.key}=${printedDelimiter}${attr.value}${printedDelimiter} `;
+    }
+
+    return buffer;
   }
 }
 

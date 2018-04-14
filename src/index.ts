@@ -5,15 +5,36 @@ let parser = new MarkupParser({
   selfCLosingTags: ['img'],
   nop: nop
 });
-let ret = parser.parse('<p >ab <img />PACA< img >cd</p  >');
+let ret = parser.parse(`<p src=T>TEST</p>`);
 let html = nop.toHtml(ret);
 console.log(html);
 
-// `<declare key="Test" value="nope">`
-// `$(Test) => nope`
+/*
+  Setup tests for :
+
+  <img src=TEST>
+  <img src=T>
+  <img src=TEST oneMore="\"\"" attr="'TESTING'">
+  <img  />
+  <a >the< b >BASIC</ b>example </a> <i>this is in the root!</i>
+
+  Errors :
+  <img
+  <img src=>
+  <img src>
+  <img src=asd zxx>
+  <img src='asd">
+  <a>Tss<b>TEST</b></p>
+*/
 
 /*
-  Add escaped tags.
+  Re-write the toHtml with templates.
+*/
+
+/* Add escaped tags. */
+
+/*
   Add variable support.
-  Templating engine as a last step.
+    `<declare key="Test" value="nope">`
+    `$(Test) => nope`
 */

@@ -123,6 +123,7 @@ export class MarkupParser implements mp.MarkupParser {
 
     let state = StateEnum.OutOFAllTags;
     let currNode: mp.ElementNode = ret.root;
+    let attrBuffer = '';
 
     for (let i = 0; i < input.length; i++) {
       for (let j = 0; j < input[i].length; j++) {
@@ -155,7 +156,8 @@ export class MarkupParser implements mp.MarkupParser {
             currNode = newEl;
           } else if (symbol + nextSymbol === '/>' && !notInTag) {
             if (this.isSelfClosing(currNode.tagName)) {
-              // this.extractAttributes(currNode);
+              this.extractAttrs(currNode, attrBuffer);
+              attrBuffer = '';
               currNode = currNode.parent;
             } else {
               throw new Error(em.UNEXPECTED_SEQUENCE('/>'))
@@ -163,13 +165,14 @@ export class MarkupParser implements mp.MarkupParser {
           } else if (symbol === '>' && notInTag) {
             const inClosing = (prevState === StateEnum.InClosingTag);
             if (inClosing || this.isSelfClosing(currNode.tagName)) {
-              // this.extractAttributes(currNode);
+              this.extractAttrs(currNode, attrBuffer);
+              attrBuffer = '';
               currNode = currNode.parent;
             }
           } else if (state === StateEnum.InTagName && notWhiteSpace(symbol)) {
             currNode.tagName += symbol;
           } else if (state === StateEnum.InAttribute) {
-            currNode.attrBuffer += symbol;
+            attrBuffer += symbol;
           } else if (state === StateEnum.InTagBody && prevState === StateEnum.InTagBody) {
             nop.addText(currNode, symbol);
           }
@@ -182,7 +185,67 @@ export class MarkupParser implements mp.MarkupParser {
     return ret;
   }
 
-  private isSelfClosing (tagName: string): boolean {
+  private isSelfClosing(tagName: string): boolean {
     return this.opts.selfCLosingTags.indexOf(tagName) >= 0;
+  }
+
+  // TODO: Works fine, but could be refactored with Enums and other types.
+  // Mini state machine for attribute extraction :
+  private extractAttrs(currNode: mp.ElementNode, attrBuffer: string): void {
+    attrBuffer = attrBuffer.trim();
+    if (attrBuffer === '') return
+
+    let currKey = '';
+    let currValue = '';
+    let currDelimiter = '';
+    let currState = 1;
+
+    for (let i = 0; i < attrBuffer.length; i++) {
+      const symbol = attrBuffer[i];
+      const nextSymbol = attrBuffer[i + 1];
+
+      if (currState === 0) {
+        if (notWhiteSpace(symbol)) currState = 1;
+        else continue;
+      }
+
+      if (currState === 1) {
+        if (symbol + nextSymbol === '="') {
+          currDelimiter = '"';
+          currState = 2;
+          i++;
+        } else if (symbol + nextSymbol === `='`) {
+          currDelimiter = `'`;
+          currState = 2;
+          i++;
+        } else if (symbol === '=') {
+          currDelimiter = ' ';
+          currState = 2;
+        } else if (/\w+/.test(symbol)) {
+          currKey += symbol;
+        } else {
+          throw new Error(em.INVALID_ATTRIBUTE_KEY());
+        }
+      } else if (currState === 2) {
+        if (currKey === '') throw new Error(em.INVALID_ATTRIBUTE_KEY());
+
+        const dumbSpecialCase = (currDelimiter === ' ' && nextSymbol === undefined);
+        if (symbol === currDelimiter || dumbSpecialCase) {
+          if (dumbSpecialCase && notWhiteSpace(symbol)) currValue += symbol
+          if (currValue === '') throw new Error(em.INVALID_ATTRIBUTE_VALUE());
+          currNode.attributes.push(<mp.Attribute>{
+            key: currKey,
+            value: currValue,
+            delimiter: currDelimiter
+          });
+          currDelimiter = '';
+          currKey = '';
+          currValue = '';
+          currState = 0;
+        } else {
+          currValue += symbol;
+        }
+      }
+    }
   }
 }

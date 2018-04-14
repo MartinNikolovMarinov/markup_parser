@@ -12,7 +12,13 @@ declare global {
 
     interface Tuple<Key, Val> {
       key: Key,
-      value: Val,
+      value: Val
+    }
+
+    interface Attribute {
+      key: string,
+      value: string,
+      delimiter: ' ' | '"' | '\''
     }
 
     interface MarkupTree {
@@ -27,8 +33,7 @@ declare global {
 
     interface ElementNode extends MarkupNode {
       tagName: string;
-      attrBuffer: string;
-      attributes: Tuple<string, string>[];
+      attributes: Attribute[];
       children: Array<MarkupNode>;
     }
 
