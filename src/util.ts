@@ -15,5 +15,6 @@ export function isLetter(symbol: string): boolean {
 
 export const errorMessages = {
   TAGNAME_IS_EMPTY: () => 'Tag name is empty',
-  ERROR_ON_LINE: (i: number, j: number, msg: string) => `ERROR ON LINE[${i},${j}]: ${msg}`
+  ERROR_ON_LINE: (i: number, j: number, msg: string) => `ERROR ON LINE[${i},${j}]: ${msg}`,
+  UNEXPECTED_SEQUENCE: (seq: string) => `Unexpected ${seq} sequence !`,
 }

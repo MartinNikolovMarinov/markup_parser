@@ -2,23 +2,9 @@ import { ROOT_TAG_NAME } from './constants'
 
 function isElementNode(obj: any) { return 'children' in obj; }
 
-let buffer: string;
-function _toHtml(node: mp.ElementNode) {
-  const openTag = `<${node.tagName}>`;
-  const closeTag = `</${node.tagName}>`;
-
-  if (node.tagName !== ROOT_TAG_NAME) buffer += openTag;
-  for (let i = 0; i < node.children.length; i++) {
-    let c = node.children[i];
-    if (isElementNode(c))
-      _toHtml(c as mp.ElementNode);
-    else
-      buffer += (c as mp.TextNode).content;
-  }
-  if (node.tagName !== ROOT_TAG_NAME) buffer += closeTag;
-}
-
 class NodeOperator implements mp.NodeOperator {
+  private buffer: string;
+
   init(opts?: any): mp.ElementNode {
     return {
       tagName: '',
@@ -57,10 +43,30 @@ class NodeOperator implements mp.NodeOperator {
     }
   }
 
-  toHtml(node: mp.ElementNode): string {
-    buffer = '';
-    _toHtml(node);
-    return buffer;
+  toHtml(tree: mp.MarkupTree): string {
+    this.buffer = '';
+    this._toHtml(tree.root, tree.selfCLosingTags);
+    return this.buffer;
+  }
+
+  private _toHtml(node: mp.ElementNode, selfClosingTags: string[]): void {
+    const openTag = `<${node.tagName}>`;
+    const closeTag = `</${node.tagName}>`;
+
+    if(selfClosingTags.indexOf(node.tagName) >= 0) {
+      this.buffer += openTag;
+      return;
+    }
+
+    if (node.tagName !== ROOT_TAG_NAME) this.buffer += openTag;
+    for (let i = 0; i < node.children.length; i++) {
+      let c = node.children[i];
+      if (isElementNode(c))
+        this._toHtml(c as mp.ElementNode, selfClosingTags);
+      else
+        this.buffer += (c as mp.TextNode).content;
+    }
+    if (node.tagName !== ROOT_TAG_NAME) this.buffer += closeTag;
   }
 }
 

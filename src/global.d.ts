@@ -1,12 +1,13 @@
 declare global {
   namespace mp {
     interface MarkupParser {
-      config(opts: ParserOptions): void;
+      opts: mp.ParserOptions;
       parse(input: string): MarkupTree;
     }
 
     interface ParserOptions {
-      ignoreVariables: boolean;
+      selfCLosingTags: string[],
+      nop: mp.NodeOperator,
     }
 
     interface Tuple<Key, Val> {
@@ -17,6 +18,7 @@ declare global {
     interface MarkupTree {
       root: ElementNode;
       variables: Tuple<string, string>[];
+      selfCLosingTags: string[];
     }
 
     interface MarkupNode {
@@ -37,8 +39,9 @@ declare global {
     interface NodeOperator {
       init(opts?: any) : ElementNode;
       add(p: ElementNode, c: MarkupNode): void;
+      addText(n: mp.ElementNode, text: string): void;
       traverse(n: ElementNode, order: "pre" | "post", callback: (n: MarkupNode) => void): void;
-      toHtml(node: mp.ElementNode): string;
+      toHtml(node: mp.MarkupTree): string;
     }
   }
 }
