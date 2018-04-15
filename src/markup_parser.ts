@@ -1,10 +1,24 @@
-import { ROOT_TAG_NAME } from './constants'
+import { ROOT_TAG_NAME } from './constants';
 import {
   errorMessages as em,
   isLetter,
   isWhiteSpace,
   notWhiteSpace,
-} from './util'
+} from './util';
+
+interface ParseFlags {
+  isEscaped: boolean;
+  isNested: boolean;
+}
+
+interface StateChangeProps {
+  curr: StateEnum;
+  symbol: string;
+  parseFlags: ParseFlags;
+  prev: StateEnum;
+  nextSymbol: string;
+  currNode: mp.ElementNode;
+}
 
 enum StateEnum {
   OutOFAllTags = 1,
@@ -18,21 +32,12 @@ enum StateEnum {
 }
 
 type StateCallback = (props: StateChangeProps) => StateEnum;
-type ParseFlags = { isEscaped: boolean, isNested: boolean }
-type StateChangeProps = {
-  curr: StateEnum,
-  symbol: string,
-  parseFlags: ParseFlags,
-  prev: StateEnum,
-  nextSymbol: string,
-  currNode: mp.ElementNode
-}
 
-let parseStates: { [state: number]: StateCallback } = {};
+const parseStates: { [state: number]: StateCallback } = {};
 
 parseStates[StateEnum.OutOFAllTags] = (scProps) => {
-  if (scProps.symbol === '<') return StateEnum.InOpeningTag
-  else return scProps.curr
+  if (scProps.symbol === '<') return StateEnum.InOpeningTag;
+  else return scProps.curr;
 };
 parseStates[StateEnum.InOpeningTag] = (scProps) => {
   if (notWhiteSpace(scProps.symbol)) {
@@ -40,7 +45,7 @@ parseStates[StateEnum.InOpeningTag] = (scProps) => {
     else return StateEnum.InTagName;
   }
 
-  return scProps.curr
+  return scProps.curr;
 };
 parseStates[StateEnum.InTagName] = (scProps) => {
   if (notWhiteSpace(scProps.symbol) && scProps.symbol === '>') {
@@ -50,7 +55,7 @@ parseStates[StateEnum.InTagName] = (scProps) => {
 
   if (isWhiteSpace(scProps.symbol)) return StateEnum.InOpeningTagWhiteSpace;
 
-  return scProps.curr
+  return scProps.curr;
 };
 parseStates[StateEnum.InOpeningTagWhiteSpace] = (scProps) => {
   if (notWhiteSpace(scProps.symbol) && scProps.symbol === '>') {
@@ -60,7 +65,7 @@ parseStates[StateEnum.InOpeningTagWhiteSpace] = (scProps) => {
 
   if (isLetter(scProps.symbol)) return StateEnum.InAttribute;
 
-  return scProps.curr
+  return scProps.curr;
 };
 parseStates[StateEnum.InAttribute] = (scProps) => {
   if (notWhiteSpace(scProps.symbol) && scProps.symbol === '>') {
@@ -86,15 +91,16 @@ parseStates[StateEnum.InTagBody] = (scProps) => {
 };
 parseStates[StateEnum.InClosingTag] = (scProps) => {
   if (scProps.symbol === '>') {
-    if (scProps.currNode.parent.tagName === ROOT_TAG_NAME)
+    if (scProps.currNode.parent.tagName === ROOT_TAG_NAME) {
       scProps.parseFlags.isNested = false;
+    }
 
     if (scProps.parseFlags.isNested) return StateEnum.InTagBody;
     else return StateEnum.OutOFAllTags;
   }
 
-  return scProps.curr
-}
+  return scProps.curr;
+};
 
 export class MarkupParser implements mp.MarkupParser {
   public opts: mp.ParserOptions;
@@ -103,18 +109,17 @@ export class MarkupParser implements mp.MarkupParser {
     this.opts = opts;
   }
 
-  parse(raw: string): mp.MarkupTree {
-    if (!this.opts)
-      throw new Error('Options not set. Please provide a correct opts object.');
+  public parse(raw: string): mp.MarkupTree {
+    if (!this.opts) throw new Error('Options not set. Please provide a correct opts object.');
 
     const input = raw.split('\n');
     const { selfCLosingTags, nop } = this.opts;
     const parseFlags: ParseFlags = {
       isEscaped: false,
       isNested: false
-    }
+    };
 
-    let ret = <mp.MarkupTree>{
+    const ret = <mp.MarkupTree> {
       root: nop.init(),
       selfCLosingTags: selfCLosingTags,
       variables: null
@@ -128,12 +133,11 @@ export class MarkupParser implements mp.MarkupParser {
     for (let i = 0; i < input.length; i++) {
       for (let j = 0; j < input[i].length; j++) {
         try {
-          let symbol = input[i][j];
-          let nextSymbol = input[i][j + 1];
-          let prevState = state;
-          let notInTag;
+          const symbol = input[i][j];
+          const nextSymbol = input[i][j + 1];
+          const prevState = state;
 
-          state = parseStates[state].call(this, <StateChangeProps>{
+          state = parseStates[state].call(this, <StateChangeProps> {
             curr: state,
             prev: prevState,
             symbol: symbol,
@@ -144,14 +148,14 @@ export class MarkupParser implements mp.MarkupParser {
 
           const stateStr = StateEnum[state];
           const prevStateStr = StateEnum[prevState];
-          notInTag = [
+          const notInTag = [
             StateEnum.InTagBody,
             StateEnum.OutOFAllTags,
             StateEnum.InEscapedTagBody
           ].indexOf(state) >= 0;
 
           if (state === StateEnum.InOpeningTag && symbol === '<') {
-            let newEl: mp.ElementNode = nop.init();
+            const newEl: mp.ElementNode = nop.init();
             nop.add(currNode, newEl);
             currNode = newEl;
           } else if (symbol + nextSymbol === '/>' && !notInTag) {
@@ -160,7 +164,7 @@ export class MarkupParser implements mp.MarkupParser {
               attrBuffer = '';
               currNode = currNode.parent;
             } else {
-              throw new Error(em.UNEXPECTED_SEQUENCE('/>'))
+              throw new Error(em.UNEXPECTED_SEQUENCE('/>'));
             }
           } else if (symbol === '>' && notInTag) {
             const inClosing = (prevState === StateEnum.InClosingTag);
@@ -177,7 +181,7 @@ export class MarkupParser implements mp.MarkupParser {
             nop.addText(currNode, symbol);
           }
         } catch (err) {
-          throw new Error(em.ERROR_ON_LINE(i + 1, j + 1, err.message))
+          throw new Error(em.ERROR_ON_LINE(i + 1, j + 1, err.message));
         }
       }
     }
@@ -193,7 +197,7 @@ export class MarkupParser implements mp.MarkupParser {
   // Mini state machine for attribute extraction :
   private extractAttrs(currNode: mp.ElementNode, attrBuffer: string): void {
     attrBuffer = attrBuffer.trim();
-    if (attrBuffer === '') return
+    if (attrBuffer === '') return;
 
     let currKey = '';
     let currValue = '';
@@ -231,9 +235,9 @@ export class MarkupParser implements mp.MarkupParser {
 
         const dumbSpecialCase = (currDelimiter === ' ' && nextSymbol === undefined);
         if (symbol === currDelimiter || dumbSpecialCase) {
-          if (dumbSpecialCase && notWhiteSpace(symbol)) currValue += symbol
+          if (dumbSpecialCase && notWhiteSpace(symbol)) currValue += symbol;
           if (currValue === '') throw new Error(em.INVALID_ATTRIBUTE_VALUE());
-          currNode.attributes.push(<mp.Attribute>{
+          currNode.attributes.push(<mp.Attribute> {
             key: currKey,
             value: currValue,
             delimiter: currDelimiter

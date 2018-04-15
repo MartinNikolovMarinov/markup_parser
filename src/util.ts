@@ -1,8 +1,9 @@
 export function isWhiteSpace (symbol: string): boolean {
-  if (typeof symbol === 'undefined' || symbol == null)
-    return true
-  else
-    return symbol.replace(/\s/g, '').length < 1
+  if (typeof symbol === 'undefined' || symbol == null) {
+    return true;
+  } else {
+    return symbol.replace(/\s/g, '').length < 1;
+  }
 }
 
 export function notWhiteSpace(symbol: string): boolean {
@@ -20,4 +21,4 @@ export const errorMessages = {
   INVALID_ATTRIBUTE: () => 'One of the attributes is formatted incorrectly !',
   INVALID_ATTRIBUTE_KEY: () => 'Invalid attribute key !',
   INVALID_ATTRIBUTE_VALUE: () => 'Invalid attribute value !'
-}
+};

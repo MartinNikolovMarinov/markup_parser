@@ -11,9 +11,14 @@
     "removeComments": true,
     "alwaysStrict": true,
     "emitBOM": true,
-    "allowSyntheticDefaultImports": false,
+    "allowSyntheticDefaultImports": false
     // The deafult will include all packages under ./typings, and no packages from ./node_modules/@types.
     // "typeRoots" : ["./typings"] /* if this is specified, only typings in these folders are used, all else are ignored ! */
   },
-  // "exclude": [] /* defaults to node_modules, bower_components, jspm_packages and <outDir> */
+  "exclude": [
+    "node_modules",
+    "bower_components",
+    "dist",
+    "**/*test.ts"
+  ]
 }
