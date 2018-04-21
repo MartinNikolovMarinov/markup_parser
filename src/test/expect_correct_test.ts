@@ -5,7 +5,7 @@ import { MarkupParser } from '../markup_parser';
 import { nop } from '../node_operator';
 import { assert, expect } from 'chai';
 
-describe('Test', () => {
+describe('Correctness Tests', () => {
   let mp: MarkupParser;
 
   before(() => {
@@ -74,6 +74,32 @@ describe('Test', () => {
     expect(firstChild.children[1] as mp.ElementNode).does.not.have.property('content');
     expect(firstChild.children[2] as mp.TextNode).has.property('content', 'example ');
     expect(result).is.eq(`<a>the<b>BASIC</b>example </a><i>this is in the root!</i>`);
+  });
+
+  it('Escaped tag with extra attribute.', () => {
+    const input = `<p escaped=true href="other attrs">T<a>Escaped</a>T</p>`;
+    const tree = mp.parse(input);
+    const result = nop.toHtml(tree);
+    const firstChild = getFirstChild(tree.root);
+
+    expect(tree.root.children.length).is.eq(1);
+    expect(firstChild.children.length).is.eq(1);
+    expect(firstChild.children[0] as mp.TextNode).has.property('content', 'T<a>Escaped</a>T');
+    expect(result).is.eq(`<p escaped=true href="other attrs">T<a>Escaped</a>T</p>`);
+  });
+
+  it('Escaped = false attribute.', () => {
+    const input = `<p escaped='false'>T<a>NOT Escaped</a>T</p>`;
+    const tree = mp.parse(input);
+    const result = nop.toHtml(tree);
+    const firstChild = getFirstChild(tree.root);
+
+    expect(tree.root.children.length).is.eq(1);
+    expect(firstChild.children.length).is.eq(3);
+    expect(firstChild.children[0] as mp.TextNode).has.property('content', 'T');
+    expect(firstChild.children[1] as mp.ElementNode).does.not.have.property('content');
+    expect(firstChild.children[2] as mp.TextNode).has.property('content', 'T');
+    expect(result).is.eq(`<p escaped='false'>T<a>NOT Escaped</a>T</p>`);
   });
 });
 
