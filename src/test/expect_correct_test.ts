@@ -72,8 +72,17 @@ describe('Correctness Tests', () => {
     expect(result).is.eq(input);
   });
 
+  it('Empty attribute value with empty space delimiter.', () => {
+    const input = '<img src= t=>';
+    const tree = mp.parse(input);
+    const result = nop.toHtml(tree);
+    const firstChild = getFirstChild(tree.root);
+    expect(firstChild.attributes.length).is.eq(2);
+    expect(result).is.eq(input);
+  });
+
   it('Basic nested tag example, with white spaces in odd places.', () => {
-    const input = `<a >the< b >BASIC</img b>example </a> <i>this is in the root!</i>`;
+    const input = `<a >the< b >BASIC</b>example </a> <i>this is in the root!</i>`;
     const tree = mp.parse(input);
     const result = nop.toHtml(tree);
     const firstChild = getFirstChild(tree.root);

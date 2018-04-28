@@ -5,14 +5,9 @@ const parser = new MarkupParser({
   selfCLosingTags: ['img'],
   nop: nop
 });
-const ret = parser.parse(`<img escaped="true"/> <p>TT</p>`);
+const ret = parser.parse(`<p escaped=true href="other attrs">T<a>Escaped</a>T</p>`);
 const html = nop.toHtml(ret);
 console.log(html);
-
-/**
- * Think about tag mismatch error handling :
- * <a><p></p></c>
- */
 
 /*
   Add variable support.

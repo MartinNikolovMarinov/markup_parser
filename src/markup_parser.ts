@@ -136,23 +136,27 @@ export class MarkupParser implements mp.MarkupParser {
           const stateStr = StateEnum[state];
           const prevStateStr = StateEnum[prevState];
 
-          if (prevState === StateEnum.InClosingTag &&
-            state === StateEnum.InTagBody &&
-            parseFlags.isEscaped &&
-            this.trimClosingTagBuffer(closingTagBuffer) === currNode.tagName
-          ) {
-            parseFlags.isEscaped = false;
-            closingTagBuffer = '';
-            if (currNode.parent.tagName === ROOT_TAG_NAME) {
-              state = StateEnum.OutOFAllTags;
+          // Closing Tag checks :
+          if (prevState === StateEnum.InClosingTag && prevState !== state) {
+            const closingTag: string = this.trimClosingTagBuffer(closingTagBuffer);
+            const tagsAreMatching: boolean = closingTag === currNode.tagName;
+            if (parseFlags.isEscaped) {
+              if (tagsAreMatching) {
+                parseFlags.isEscaped = false;
+                closingTagBuffer = '';
+                currNode = currNode.parent;
+                if (currNode.tagName === ROOT_TAG_NAME) {
+                  state = StateEnum.OutOFAllTags;
+                }
+              } else {
+                nop.addText(currNode, closingTagBuffer + symbol);
+                closingTagBuffer = '';
+              }
+            } else {
+              if (!tagsAreMatching) throw new Error(em.TAG_MISMATCH());
+              closingTagBuffer = '';
+              currNode = currNode.parent;
             }
-          } else if (state === StateEnum.InClosingTag && parseFlags.isEscaped) {
-            closingTagBuffer += symbol;
-          } else if (closingTagBuffer) {
-            if (parseFlags.isEscaped) nop.addText(currNode, closingTagBuffer + symbol);
-            closingTagBuffer = '';
-          } else if (prevState === StateEnum.InClosingTag && prevState !== state) {
-            currNode = currNode.parent;
           }
           // Nest a new element :
           // tslint:disable-next-line:one-line
@@ -196,6 +200,8 @@ export class MarkupParser implements mp.MarkupParser {
             currNode.tagName += symbol;
           } else if (state === StateEnum.InAttribute) {
             attrBuffer += symbol;
+          } else if (state === StateEnum.InClosingTag) {
+            closingTagBuffer += symbol;
           } else if (state === StateEnum.InTagBody && prevState === StateEnum.InTagBody) {
             nop.addText(currNode, symbol);
           }
