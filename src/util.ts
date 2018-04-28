@@ -23,5 +23,6 @@ export const errorMessages = {
   UNEXPECTED_ERROR: () => 'An unexpected error occurred !',
   ESCAPED_SELF_CLOSING_TAG: () => 'Self closing tags can\'t be escaped !',
   TAG_MISMATCH: () => 'Closing and Opening tag are a mismatch !',
-  TAG_FORMATTING_ERR: () => 'An unclosed, or inconsistently formatted, tag detected !'
+  TAG_FORMATTING_ERR: () => 'An unclosed, or inconsistently formatted, tag detected !',
+  INVALID_VARIABLE_DECLARATION: () => 'Invalid variable declaration !'
 };

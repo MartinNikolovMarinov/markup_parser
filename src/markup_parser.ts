@@ -6,6 +6,10 @@ import {
   notWhiteSpace,
 } from './util';
 
+const reserved = {
+  DECLARE: 'declare'
+};
+
 interface ParseFlags {
   isEscaped: boolean;
   isNested: boolean;
@@ -105,10 +109,14 @@ export class MarkupParser implements mp.MarkupParser {
       isNested: false
     };
 
+    if (selfCLosingTags.indexOf('declare') === -1) {
+      selfCLosingTags.push('declare');
+    }
+
     const ret = <mp.MarkupTree> {
       root: nop.init(),
       selfCLosingTags: selfCLosingTags,
-      variables: null
+      variables: []
     };
     ret.root.tagName = ROOT_TAG_NAME;
 
@@ -173,6 +181,22 @@ export class MarkupParser implements mp.MarkupParser {
               if (parseFlags.isEscaped) throw new Error(em.ESCAPED_SELF_CLOSING_TAG());
               if (!currNode.parent) throw new Error(em.UNEXPECTED_ERROR());
 
+              if (currNode.tagName === reserved.DECLARE) {
+                let keyAttr: mp.Attribute;
+                let valueAttr: mp.Attribute;
+                currNode.attributes.forEach((x: mp.Attribute) => {
+                  if (x.key === 'key') keyAttr = x;
+                  if (x.key === 'value') valueAttr = x;
+                });
+
+                if (keyAttr === undefined) throw new Error(em.INVALID_VARIABLE_DECLARATION());
+                if (valueAttr === undefined) throw new Error(em.INVALID_VARIABLE_DECLARATION());
+                ret.variables.push(<mp.Tuple<string, string>> {
+                  key: keyAttr.value,
+                  value: valueAttr.value
+                });
+              }
+
               attrBuffer = '';
               currNode = currNode.parent;
               state = parseFlags.isNested ? StateEnum.InTagBody : StateEnum.OutOFAllTags;
@@ -185,6 +209,22 @@ export class MarkupParser implements mp.MarkupParser {
               this.extractAttrs(currNode, attrBuffer, parseFlags);
               if (parseFlags.isEscaped) throw new Error(em.ESCAPED_SELF_CLOSING_TAG());
               if (!currNode.parent) throw new Error(em.UNEXPECTED_ERROR());
+
+              if (currNode.tagName === reserved.DECLARE) {
+                let keyAttr: mp.Attribute;
+                let valueAttr: mp.Attribute;
+                currNode.attributes.forEach((x: mp.Attribute) => {
+                  if (x.key === 'key') keyAttr = x;
+                  if (x.key === 'value') valueAttr = x;
+                });
+
+                if (keyAttr === undefined) throw new Error(em.INVALID_VARIABLE_DECLARATION());
+                if (valueAttr === undefined) throw new Error(em.INVALID_VARIABLE_DECLARATION());
+                ret.variables.push(<mp.Tuple<string, string>> {
+                  key: keyAttr.value,
+                  value: valueAttr.value
+                });
+              }
 
               attrBuffer = '';
               currNode = currNode.parent;

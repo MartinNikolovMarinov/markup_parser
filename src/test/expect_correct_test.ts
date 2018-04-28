@@ -149,14 +149,22 @@ describe('Correctness Tests', () => {
     '  <li>B</li>\n' +
     '  <li>C</li>\n' +
     '</ul>';
-
     const tree = mp.parse(input);
     const result = nop.toHtml(tree);
     const firstChild = getFirstChild(tree.root);
+
     expect(tree.root.children.length).is.eq(1);
     expect(firstChild.children.length).is.eq(1); // White spaces are notes too
     expect(firstChild.children[0] as mp.TextNode).has.property('content');
     expect(result).is.eq(input);
+  });
+
+  it('Simple variable declaration.', () => {
+    const input = `<declare key="a" value=b>`;
+    const tree = mp.parse(input);
+    expect(tree.variables.length).is.eq(1);
+    expect(tree.variables[0].key).is.eq('a');
+    expect(tree.variables[0].value).is.eq('b');
   });
 });
 
