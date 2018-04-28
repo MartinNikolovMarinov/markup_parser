@@ -24,6 +24,16 @@ describe('Correctness Tests', () => {
     expect(result).is.eq('<img>');
   });
 
+  it('Two self closing tags on the same level.', () => {
+    // USE TO BE A BUG.
+    const input = `<img/><img/>`;
+    const tree = mp.parse(input);
+    const result = nop.toHtml(tree);
+
+    expect(tree.root.children.length).is.eq(2);
+    expect(result).is.eq(`<img><img>`);
+  });
+
   it('Self closing tag with "no bracket" attribute.', () => {
     const input = `<img src=TEST>`;
     const tree = mp.parse(input);
@@ -63,7 +73,7 @@ describe('Correctness Tests', () => {
   });
 
   it('Basic nested tag example, with white spaces in odd places.', () => {
-    const input = `<a >the< b >BASIC</ b>example </a> <i>this is in the root!</i>`;
+    const input = `<a >the< b >BASIC</img b>example </a> <i>this is in the root!</i>`;
     const tree = mp.parse(input);
     const result = nop.toHtml(tree);
     const firstChild = getFirstChild(tree.root);

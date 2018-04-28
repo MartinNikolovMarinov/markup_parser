@@ -5,19 +5,20 @@ const parser = new MarkupParser({
   selfCLosingTags: ['img'],
   nop: nop
 });
-const ret = parser.parse(`<a>TT</ a>`);
+const ret = parser.parse(`<img escaped="true"/> <p>TT</p>`);
 const html = nop.toHtml(ret);
+console.log(html);
+
+/**
+ * Think about tag mismatch error handling :
+ * <a><p></p></c>
+ */
 
 /*
   Add variable support.
     `<declare key="Test" value="nope">`
     `$(Test) => nope`
 */
-
-/**
- * Think about tag mismatch error handling :
- * <a><p></p></c>
- */
 
 /*
   Re-write the toHtml with templates.

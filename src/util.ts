@@ -20,7 +20,6 @@ export const errorMessages = {
   UNEXPECTED_SEQUENCE: (seq: string) => `Unexpected ${seq} sequence !`,
   INVALID_ATTRIBUTE: () => 'One of the attributes is formatted incorrectly !',
   INVALID_ATTRIBUTE_KEY: () => 'Invalid attribute key !',
-  INVALID_ATTRIBUTE_VALUE: () => 'Invalid attribute value !',
   UNEXPECTED_ERROR: () => 'An unexpected error occurred !',
   ESCAPED_SELF_CLOSING_TAG: () => 'Self closing tags can\'t be escaped !',
   TAG_FORMATTING_ERR: () => 'An unclosed, or inconsistently formatted, tag detected !'

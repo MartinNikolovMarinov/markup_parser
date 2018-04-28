@@ -30,6 +30,12 @@ enum StateEnum {
   InClosingTag = 7 // (found </)
 }
 
+enum AttrParseState {
+  OutOfAttr = 1,
+  InAttrName = 2,
+  InAttrValue = 3
+}
+
 type StateCallback = (props: StateChangeProps) => StateEnum;
 
 const parseStates: { [state: number]: StateCallback } = {};
@@ -158,11 +164,13 @@ export class MarkupParser implements mp.MarkupParser {
           // Extract attributes :
           // tslint:disable-next-line:one-line
           else if (symbol + nextSymbol === '/>' && this.inOpeningTag(prevState)) {
-            // TODO: check if this extracts attributes twice! Might need iterator increment.
             if (this.isSelfClosing(currNode.tagName)) {
               this.extractAttrs(currNode, attrBuffer, parseFlags);
               if (parseFlags.isEscaped) throw new Error(em.ESCAPED_SELF_CLOSING_TAG());
+              if (!currNode.parent) throw new Error(em.UNEXPECTED_ERROR());
+
               attrBuffer = '';
+              currNode = currNode.parent;
               state = parseFlags.isNested ? StateEnum.InTagBody : StateEnum.OutOFAllTags;
               j++;
             } else {
@@ -172,7 +180,10 @@ export class MarkupParser implements mp.MarkupParser {
             if (this.isSelfClosing(currNode.tagName)) {
               this.extractAttrs(currNode, attrBuffer, parseFlags);
               if (parseFlags.isEscaped) throw new Error(em.ESCAPED_SELF_CLOSING_TAG());
+              if (!currNode.parent) throw new Error(em.UNEXPECTED_ERROR());
+
               attrBuffer = '';
+              currNode = currNode.parent;
               state = parseFlags.isNested ? StateEnum.InTagBody : StateEnum.OutOFAllTags;
             } else {
               this.extractAttrs(currNode, attrBuffer, parseFlags);
@@ -234,41 +245,40 @@ export class MarkupParser implements mp.MarkupParser {
     let currKey = '';
     let currValue = '';
     let currDelimiter = '';
-    let currState = 1;
+    let currState: AttrParseState = AttrParseState.InAttrName;
 
     for (let i = 0; i < attrBuffer.length; i++) {
       const symbol = attrBuffer[i];
       const nextSymbol = attrBuffer[i + 1];
 
-      if (currState === 0) {
-        if (notWhiteSpace(symbol)) currState = 1;
+      if (currState === AttrParseState.OutOfAttr) {
+        if (notWhiteSpace(symbol)) currState = AttrParseState.InAttrName;
         else continue;
       }
 
-      if (currState === 1) {
+      if (currState === AttrParseState.InAttrName) {
         if (symbol + nextSymbol === '="') {
           currDelimiter = '"';
-          currState = 2;
+          currState = AttrParseState.InAttrValue;
           i++;
         } else if (symbol + nextSymbol === `='`) {
           currDelimiter = `'`;
-          currState = 2;
+          currState = AttrParseState.InAttrValue;
           i++;
         } else if (symbol === '=') {
           currDelimiter = ' ';
-          currState = 2;
+          currState = AttrParseState.InAttrValue;
         } else if (/\w+/.test(symbol)) {
           currKey += symbol;
         } else {
           throw new Error(em.INVALID_ATTRIBUTE_KEY());
         }
-      } else if (currState === 2) {
+      } else if (currState === AttrParseState.InAttrValue) {
         if (currKey === '') throw new Error(em.INVALID_ATTRIBUTE_KEY());
 
         const dumbSpecialCase = (currDelimiter === ' ' && nextSymbol === undefined);
         if (symbol === currDelimiter || dumbSpecialCase) {
           if (dumbSpecialCase && notWhiteSpace(symbol)) currValue += symbol;
-          if (currValue === '') throw new Error(em.INVALID_ATTRIBUTE_VALUE());
           currNode.attributes.push(<mp.Attribute> {
             key: currKey,
             value: currValue,
@@ -280,11 +290,19 @@ export class MarkupParser implements mp.MarkupParser {
           currDelimiter = '';
           currKey = '';
           currValue = '';
-          currState = 0;
+          currState = AttrParseState.OutOfAttr;
         } else {
           currValue += symbol;
         }
       }
+    }
+
+    if (currState !== AttrParseState.OutOfAttr) {
+      currNode.attributes.push(<mp.Attribute> {
+        key: currKey,
+        value: currValue,
+        delimiter: currDelimiter
+      });
     }
   }
 }
