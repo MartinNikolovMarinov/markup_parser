@@ -209,6 +209,10 @@ export class MarkupParser implements mp.MarkupParser {
           throw new Error(em.ERROR_ON_LINE(i + 1, j + 1, err.message));
         }
       }
+
+      if (i < input.length - 1) {
+        nop.addText(currNode, '\n');
+      }
     }
 
     if (state !== StateEnum.OutOFAllTags) {

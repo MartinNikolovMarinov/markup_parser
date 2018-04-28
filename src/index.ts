@@ -5,9 +5,18 @@ const parser = new MarkupParser({
   selfCLosingTags: ['img'],
   nop: nop
 });
-const ret = parser.parse(`<p escaped=true href="other attrs">T<a>Escaped</a>T</p>`);
+const input = '<ul escaped=true>\n' +
+'  <li>A</li>\n' +
+'  <li>B</li>\n' +
+'  <li>C</li>\n' +
+'</ul>';
+const ret = parser.parse(input);
 const html = nop.toHtml(ret);
 console.log(html);
+
+/*
+  Re-write the toHtml with templates.
+*/
 
 /*
   Add variable support.
@@ -16,10 +25,6 @@ console.log(html);
 */
 
 /*
-  Re-write the toHtml with templates.
-*/
-
- /*
 !!
   Make the generated output a SPA app, instead of linking html pages. Ya dunce.
 !!

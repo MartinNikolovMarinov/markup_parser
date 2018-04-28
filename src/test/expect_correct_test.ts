@@ -120,6 +120,44 @@ describe('Correctness Tests', () => {
     expect(firstChild.children[2] as mp.TextNode).has.property('content', 'T');
     expect(result).is.eq(`<p escaped='false'>T<a>NOT Escaped</a>T</p>`);
   });
+
+  it('Multiline unordered list spacing test.', () => {
+    const input = '<ul>\n' +
+    '  <li>A</li>\n' +
+    '  <li>B</li>\n' +
+    '  <li>C</li>\n' +
+    '</ul>';
+
+    const tree = mp.parse(input);
+    const result = nop.toHtml(tree);
+    const firstChild = getFirstChild(tree.root);
+    expect(tree.root.children.length).is.eq(1);
+    expect(firstChild.children.length).is.eq(7); // White spaces are notes too
+    expect(firstChild.children[0] as mp.TextNode).has.property('content', '\n  ');
+    expect(firstChild.children[1] as mp.ElementNode).does.not.have.property('content');
+    expect(firstChild.children[2] as mp.TextNode).has.property('content', '\n  ');
+    expect(firstChild.children[3] as mp.ElementNode).does.not.have.property('content');
+    expect(firstChild.children[4] as mp.TextNode).has.property('content', '\n  ');
+    expect(firstChild.children[5] as mp.ElementNode).does.not.have.property('content');
+    expect(firstChild.children[6] as mp.TextNode).has.property('content', '\n');
+    expect(result).is.eq(input);
+  });
+
+  it('Multiline unordered list ESCAPED spacing test.', () => {
+    const input = '<ul escaped=true>\n' +
+    '  <li>A</li>\n' +
+    '  <li>B</li>\n' +
+    '  <li>C</li>\n' +
+    '</ul>';
+
+    const tree = mp.parse(input);
+    const result = nop.toHtml(tree);
+    const firstChild = getFirstChild(tree.root);
+    expect(tree.root.children.length).is.eq(1);
+    expect(firstChild.children.length).is.eq(1); // White spaces are notes too
+    expect(firstChild.children[0] as mp.TextNode).has.property('content');
+    expect(result).is.eq(input);
+  });
 });
 
 function getFirstChild(node: mp.ElementNode): mp.ElementNode {
