@@ -4,6 +4,8 @@
 import { MarkupParser } from '../markup_parser';
 import { nop } from '../node_operator';
 import { assert, expect } from 'chai';
+import * as fs from 'fs';
+import * as path from 'path';
 
 describe('Correctness Tests', () => {
   let mp: MarkupParser;
@@ -165,6 +167,13 @@ describe('Correctness Tests', () => {
     expect(tree.variables.length).is.eq(1);
     expect(tree.variables[0].key).is.eq('a');
     expect(tree.variables[0].value).is.eq('b');
+  });
+
+  it('Long Example.', () => {
+    const input = fs.readFileSync(path.resolve(__dirname, 'long_example.html')).toString();
+    const tree = mp.parse(input);
+    const result = nop.toHtml(tree);
+    expect(result).to.eq(input);
   });
 });
 

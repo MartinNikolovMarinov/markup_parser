@@ -62,11 +62,21 @@ describe('Error Expecting Tests', () => {
 
   it('No closing tag name.', () => {
     const input = `<p></>`;
-    expect(() => mp.parse(input)).to.throw(em.TAG_MISMATCH());
+    expect(() => mp.parse(input)).to.throw(em.TAG_MISMATCH('p', ''));
   });
 
   it('Closing tag mismatch', () => {
     const input = `<a><p></p></c>`;
-    expect(() => mp.parse(input)).to.throw(em.TAG_MISMATCH());
+    expect(() => mp.parse(input)).to.throw(em.TAG_MISMATCH('a', 'c'));
+  });
+
+  it('Variable has no value attribute.', () => {
+    const input = `<declare key=a/>`;
+    expect(() => mp.parse(input)).to.throw(em.INVALID_VARIABLE_VALUE_DECLARATION());
+  });
+
+  it('Variable has no key attribute.', () => {
+    const input = `<declare value=a/>`;
+    expect(() => mp.parse(input)).to.throw(em.INVALID_VARIABLE_KEY_DECLARATION());
   });
 });

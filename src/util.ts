@@ -22,7 +22,9 @@ export const errorMessages = {
   INVALID_ATTRIBUTE_KEY: () => 'Invalid attribute key !',
   UNEXPECTED_ERROR: () => 'An unexpected error occurred !',
   ESCAPED_SELF_CLOSING_TAG: () => 'Self closing tags can\'t be escaped !',
-  TAG_MISMATCH: () => 'Closing and Opening tag are a mismatch !',
+  TAG_MISMATCH: (opening: string, closing: string) =>
+    `Opening(${opening}) and Closing(${closing}) tags are a mismatch !`,
   TAG_FORMATTING_ERR: () => 'An unclosed, or inconsistently formatted, tag detected !',
-  INVALID_VARIABLE_DECLARATION: () => 'Invalid variable declaration !'
+  INVALID_VARIABLE_KEY_DECLARATION: () => 'Invalid variable KEY declaration !',
+  INVALID_VARIABLE_VALUE_DECLARATION: () => 'Invalid variable VALUE declaration !'
 };

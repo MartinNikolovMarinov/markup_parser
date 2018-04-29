@@ -161,7 +161,7 @@ export class MarkupParser implements mp.MarkupParser {
                 closingTagBuffer = '';
               }
             } else {
-              if (!tagsAreMatching) throw new Error(em.TAG_MISMATCH());
+              if (!tagsAreMatching) throw new Error(em.TAG_MISMATCH(currNode.tagName, closingTag));
               closingTagBuffer = '';
               currNode = currNode.parent;
             }
@@ -189,8 +189,8 @@ export class MarkupParser implements mp.MarkupParser {
                   if (x.key === 'value') valueAttr = x;
                 });
 
-                if (keyAttr === undefined) throw new Error(em.INVALID_VARIABLE_DECLARATION());
-                if (valueAttr === undefined) throw new Error(em.INVALID_VARIABLE_DECLARATION());
+                if (keyAttr === undefined) throw new Error(em.INVALID_VARIABLE_KEY_DECLARATION());
+                if (valueAttr === undefined) throw new Error(em.INVALID_VARIABLE_VALUE_DECLARATION());
                 ret.variables.push(<mp.Tuple<string, string>> {
                   key: keyAttr.value,
                   value: valueAttr.value
@@ -218,8 +218,8 @@ export class MarkupParser implements mp.MarkupParser {
                   if (x.key === 'value') valueAttr = x;
                 });
 
-                if (keyAttr === undefined) throw new Error(em.INVALID_VARIABLE_DECLARATION());
-                if (valueAttr === undefined) throw new Error(em.INVALID_VARIABLE_DECLARATION());
+                if (keyAttr === undefined) throw new Error(em.INVALID_VARIABLE_KEY_DECLARATION());
+                if (valueAttr === undefined) throw new Error(em.INVALID_VARIABLE_VALUE_DECLARATION());
                 ret.variables.push(<mp.Tuple<string, string>> {
                   key: keyAttr.value,
                   value: valueAttr.value
