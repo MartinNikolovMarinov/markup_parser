@@ -43,15 +43,23 @@ class NodeOperator implements mp.NodeOperator {
     }
   }
 
-  public toHtml(tree: mp.MarkupTree): string {
+  public toHtml(tree: mp.MarkupTree, ignoreTags?: string[]): string {
     this.buffer = '';
-    this._toHtml(tree.root, tree.selfCLosingTags);
+    this._toHtml(tree.root, tree.selfCLosingTags, ignoreTags);
     return this.buffer;
   }
 
-  private _toHtml(node: mp.ElementNode, selfClosingTags: string[]): void {
+  private _toHtml(
+    node: mp.ElementNode,
+    selfClosingTags: string[],
+    ignoreTags?: string[]
+  ): void {
     const openTag = `<${node.tagName}${this.extractAttr(node)}>`;
     const closeTag = `</${node.tagName}>`;
+
+    if (ignoreTags && ignoreTags.indexOf(node.tagName) >= 0) {
+      return;
+    }
 
     if (selfClosingTags.indexOf(node.tagName) >= 0) {
       this.buffer += openTag;
@@ -61,7 +69,7 @@ class NodeOperator implements mp.NodeOperator {
     if (node.tagName !== ROOT_TAG_NAME) this.buffer += openTag;
     for (const c of node.children) {
       if (isElementNode(c)) {
-        this._toHtml(c as mp.ElementNode, selfClosingTags);
+        this._toHtml(c as mp.ElementNode, selfClosingTags, ignoreTags);
       } else {
         this.buffer += (c as mp.TextNode).content;
       }
