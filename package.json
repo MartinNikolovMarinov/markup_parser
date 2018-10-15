@@ -1,16 +1,18 @@
 {
-  "name": "markup_parser",
-  "version": "1.0.0",
-  "description": "Simple Markup Parser",
-  "main": "index.js",
+  "name": "generic-markup-parser",
+  "version": "1.0.2",
+  "description": "Simple markup parser with variables",
+  "main": "dist/index.js",
+  "typings": "src/justcore.d.ts",
   "scripts": {
+    "prepare": "rimraf dist/ && tsc --p ./tsconfig.prod.json",
     "build": "rimraf dist/ && tsc",
     "start": "rimraf dist/ && tsc -w",
     "test": "mocha -r ts-node/register src/**/*test.ts"
   },
-  "author": "",
+  "author": "martin_n_marinov",
   "license": "ISC",
-  "devDependencies": {
+  "dependencies": {
     "@types/chai": "~4.1.2",
     "@types/mocha": "~5.0.0",
     "@types/node": "~8.0.0",
