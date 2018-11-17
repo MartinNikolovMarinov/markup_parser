@@ -1,4 +1,5 @@
 import { ROOT_TAG_NAME } from './constants';
+import { nop } from './node_operator';
 import {
   errorMessages as em,
   isLetter,
@@ -103,7 +104,7 @@ export class MarkupParser implements mp.MarkupParser {
     if (!this.opts) throw new Error('Options not set. Please provide a correct opts object.');
 
     const input = raw.split('\n');
-    const { selfCLosingTags, nop } = this.opts;
+    const { selfCLosingTags } = this.opts;
     const parseFlags: ParseFlags = {
       isEscaped: false,
       isNested: false

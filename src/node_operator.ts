@@ -1,10 +1,6 @@
-import { ROOT_TAG_NAME } from './constants';
-
-function isElementNode(obj: any) { return 'children' in obj; }
+import { isElementNode } from './util';
 
 class NodeOperator implements mp.NodeOperator {
-  private buffer: string;
-
   public init(opts?: any): mp.ElementNode {
     return {
       tagName: '',
@@ -41,49 +37,6 @@ class NodeOperator implements mp.NodeOperator {
       if (isElementNode(c)) this.traverse(c as mp.ElementNode, order, callback);
       if (order === 'post') callback(n);
     }
-  }
-
-  public toHtml(tree: mp.MarkupTree): string {
-    this.buffer = '';
-    this._toHtml(tree.root, tree.selfCLosingTags);
-    return this.buffer;
-  }
-
-  private _toHtml(node: mp.ElementNode, selfClosingTags: string[]): void {
-    const openTag = `<${node.tagName}${this.extractAttr(node)}>`;
-    const closeTag = `</${node.tagName}>`;
-
-    if (selfClosingTags.indexOf(node.tagName) >= 0) {
-      this.buffer += openTag;
-      return;
-    }
-
-    if (node.tagName !== ROOT_TAG_NAME) this.buffer += openTag;
-    for (const c of node.children) {
-      if (isElementNode(c)) {
-        this._toHtml(c as mp.ElementNode, selfClosingTags);
-      } else {
-        this.buffer += (c as mp.TextNode).content;
-      }
-    }
-    if (node.tagName !== ROOT_TAG_NAME) this.buffer += closeTag;
-  }
-
-  private extractAttr(node: mp.ElementNode) {
-    if (node.attributes.length <= 0) return '';
-
-    let buffer = ' ';
-    for (let i = 0; i < node.attributes.length; i++) {
-      const attr = node.attributes[i];
-      const printedDelimiter = attr.delimiter === ' ' ? '' : attr.delimiter;
-      if (i === node.attributes.length - 1) {
-        buffer += `${attr.key}=${printedDelimiter}${attr.value}${printedDelimiter}`;
-      } else {
-        buffer += `${attr.key}=${printedDelimiter}${attr.value}${printedDelimiter} `;
-      }
-    }
-
-    return buffer;
   }
 }
 
