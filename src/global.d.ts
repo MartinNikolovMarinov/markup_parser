@@ -6,8 +6,7 @@ declare global {
     }
 
     interface ParserOptions {
-      selfCLosingTags: string[],
-      nop: mp.NodeOperator,
+      selfCLosingTags: string[]
     }
 
     interface Tuple<Key, Val> {
@@ -46,7 +45,6 @@ declare global {
       add(p: ElementNode, c: MarkupNode): void;
       addText(n: mp.ElementNode, text: string): void;
       traverse(n: ElementNode, order: "pre" | "post", callback: (n: MarkupNode) => void): void;
-      toHtml(node: mp.MarkupTree): string;
     }
   }
 }

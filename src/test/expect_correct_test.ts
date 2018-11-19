@@ -3,6 +3,7 @@
 
 import { MarkupParser } from '../markup_parser';
 import { nop } from '../node_operator';
+import * as nt from '../node_transformer';
 import { assert, expect } from 'chai';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -20,7 +21,7 @@ describe('Correctness Tests', () => {
   it('Self closing empty tag.', () => {
     const input = `<img  />`;
     const tree = mp.parse(input);
-    const result = nop.toHtml(tree);
+    const result = nt.toHtml(tree);
 
     expect(tree.root.children.length).is.eq(1);
     expect(result).is.eq('<img>');
@@ -30,7 +31,7 @@ describe('Correctness Tests', () => {
     // USE TO BE A BUG.
     const input = `<img/><img/>`;
     const tree = mp.parse(input);
-    const result = nop.toHtml(tree);
+    const result = nt.toHtml(tree);
 
     expect(tree.root.children.length).is.eq(2);
     expect(result).is.eq(`<img><img>`);
@@ -39,7 +40,7 @@ describe('Correctness Tests', () => {
   it('Self closing tag with "no bracket" attribute.', () => {
     const input = `<img src=TEST>`;
     const tree = mp.parse(input);
-    const result = nop.toHtml(tree);
+    const result = nt.toHtml(tree);
     const firstChild = getFirstChild(tree.root);
 
     expect(firstChild.attributes.length).is.eq(1);
@@ -50,7 +51,7 @@ describe('Correctness Tests', () => {
     // USE TO BE A BUG.
     const input = `<img src=T>`;
     const tree = mp.parse(input);
-    const result = nop.toHtml(tree);
+    const result = nt.toHtml(tree);
     const firstChild = getFirstChild(tree.root);
 
     expect(firstChild.attributes.length).is.eq(1);
@@ -60,7 +61,7 @@ describe('Correctness Tests', () => {
   it('Multiple attributes with different bracket styles.', () => {
     const input = `<img src=TEST oneMore="'Testing'" attr="'TESTING'">`;
     const tree = mp.parse(input);
-    const result = nop.toHtml(tree);
+    const result = nt.toHtml(tree);
     const firstChild = getFirstChild(tree.root);
 
     expect(firstChild.attributes.length).is.eq(3);
@@ -70,14 +71,14 @@ describe('Correctness Tests', () => {
   it('Empty attribute value should be allowed.', () => {
     const input = `<a href=""></a>`;
     const tree = mp.parse(input);
-    const result = nop.toHtml(tree);
+    const result = nt.toHtml(tree);
     expect(result).is.eq(input);
   });
 
   it('Empty attribute value with empty space delimiter.', () => {
     const input = '<img src= t=>';
     const tree = mp.parse(input);
-    const result = nop.toHtml(tree);
+    const result = nt.toHtml(tree);
     const firstChild = getFirstChild(tree.root);
     expect(firstChild.attributes.length).is.eq(2);
     expect(result).is.eq(input);
@@ -86,7 +87,7 @@ describe('Correctness Tests', () => {
   it('Basic nested tag example, with white spaces in odd places.', () => {
     const input = `<a >the< b >BASIC</b>example </a> <i>this is in the root!</i>`;
     const tree = mp.parse(input);
-    const result = nop.toHtml(tree);
+    const result = nt.toHtml(tree);
     const firstChild = getFirstChild(tree.root);
 
     expect(tree.root.children.length).is.eq(2);
@@ -100,7 +101,7 @@ describe('Correctness Tests', () => {
   it('Escaped tag with extra attribute.', () => {
     const input = `<p escaped=true href="other attrs">T<a>Escaped</a>T</p>`;
     const tree = mp.parse(input);
-    const result = nop.toHtml(tree);
+    const result = nt.toHtml(tree);
     const firstChild = getFirstChild(tree.root);
 
     expect(tree.root.children.length).is.eq(1);
@@ -112,7 +113,7 @@ describe('Correctness Tests', () => {
   it('Escaped = false attribute.', () => {
     const input = `<p escaped='false'>T<a>NOT Escaped</a>T</p>`;
     const tree = mp.parse(input);
-    const result = nop.toHtml(tree);
+    const result = nt.toHtml(tree);
     const firstChild = getFirstChild(tree.root);
 
     expect(tree.root.children.length).is.eq(1);
@@ -131,7 +132,7 @@ describe('Correctness Tests', () => {
     '</ul>';
 
     const tree = mp.parse(input);
-    const result = nop.toHtml(tree);
+    const result = nt.toHtml(tree);
     const firstChild = getFirstChild(tree.root);
     expect(tree.root.children.length).is.eq(1);
     expect(firstChild.children.length).is.eq(7); // White spaces are notes too
@@ -152,7 +153,7 @@ describe('Correctness Tests', () => {
     '  <li>C</li>\n' +
     '</ul>';
     const tree = mp.parse(input);
-    const result = nop.toHtml(tree);
+    const result = nt.toHtml(tree);
     const firstChild = getFirstChild(tree.root);
 
     expect(tree.root.children.length).is.eq(1);
@@ -172,7 +173,7 @@ describe('Correctness Tests', () => {
   it('Long Example.', () => {
     const input = fs.readFileSync(path.resolve(__dirname, 'long_example.html')).toString();
     const tree = mp.parse(input);
-    const result = nop.toHtml(tree);
+    const result = nt.toHtml(tree);
     expect(result).to.eq(input);
   });
 });

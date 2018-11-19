@@ -1,4 +1,4 @@
-export function isWhiteSpace (symbol: string): boolean {
+export function isWhiteSpace(symbol: string): boolean {
   if (typeof symbol === 'undefined' || symbol == null) {
     return true;
   } else {
@@ -13,6 +13,8 @@ export function notWhiteSpace(symbol: string): boolean {
 export function isLetter(symbol: string): boolean {
   return symbol.toLowerCase() !== symbol.toUpperCase();
 }
+
+export function isElementNode(obj: any) { return 'children' in obj; }
 
 export const errorMessages = {
   TAGNAME_IS_EMPTY: () => 'Tag name is empty !',
