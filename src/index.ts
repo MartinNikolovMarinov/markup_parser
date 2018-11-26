@@ -1,7 +1,8 @@
 import { MarkupParser } from './markup_parser';
-import { nop as defaultNodeOperations } from './node_operator';
+import { nop } from './node_operator';
 import { TransformPipe } from './transform_pipe';
 import { HtmlTransform } from './transforms/html_transform';
+import { ReduceWhiteSpaceTransform } from './transforms/reduce_white_space_transform';
 
 const parser: mp.MarkupParser = new MarkupParser({ selfCLosingTags: ['img'] });
 const input = `
@@ -10,8 +11,6 @@ const input = `
 
 <html>
   <head>
-
-
     <title>Sample "Hello, World" Application</title>
   </head>
   <body   bgcolor=white  >
@@ -20,7 +19,9 @@ const input = `
 </html>`;
 
 const tree = parser.parse(input);
-const html = new TransformPipe().add(new HtmlTransform()).apply(tree);
-console.log(html);
+const html = new TransformPipe()
+  .add(new ReduceWhiteSpaceTransform())
+  .add(new HtmlTransform())
+  .apply(tree);
 
-export { MarkupParser, TransformPipe, defaultNodeOperations };
+export { MarkupParser, TransformPipe, HtmlTransform, ReduceWhiteSpaceTransform, nop as nodeOperations };

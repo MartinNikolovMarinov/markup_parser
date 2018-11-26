@@ -38,6 +38,52 @@ class NodeOperator implements mp.NodeOperator {
       if (order === 'post') callback(n);
     }
   }
+
+  public deepCopy(node: mp.ElementNode): mp.ElementNode {
+    if (!node) throw new Error('Undefined node argument.');
+    const len = node.children.length;
+    const newNode = this.init();
+    newNode.attributes = this.copyAttributes(node.attributes);
+    newNode.parent = node.parent;
+    newNode.tagName = node.tagName;
+
+    for (let i = 0; i < len; i++) {
+      const c: mp.MarkupNode = node.children[i];
+      if (isElementNode(c)) {
+        this._deepCopy(c as mp.ElementNode, newNode);
+      } else {
+        this.addText(newNode, (c as mp.TextNode).content);
+      }
+    }
+
+    return newNode;
+  }
+
+  private _deepCopy(node: mp.ElementNode, copyNode: mp.ElementNode): void {
+    const len = node.children.length;
+    const newNode = this.init();
+    newNode.attributes = this.copyAttributes(node.attributes);
+    newNode.parent = copyNode;
+    newNode.tagName = node.tagName;
+    copyNode.children.push(newNode);
+
+    for (let i = 0; i < len; i++) {
+      const c: mp.MarkupNode = node.children[i];
+      if (isElementNode(c)) {
+        this._deepCopy(c as mp.ElementNode, newNode);
+      } else {
+        this.addText(newNode, (c as mp.TextNode).content);
+      }
+    }
+  }
+
+  private copyAttributes(attrs: mp.Attribute[]) {
+    const copy: mp.Attribute[] = [];
+    for (const a of attrs) {
+      copy.push(<mp.Attribute> { delimiter: a.delimiter, key: a.key, value: a.value });
+    }
+    return copy;
+  }
 }
 
 export const nop = new NodeOperator();
