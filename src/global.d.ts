@@ -1,7 +1,7 @@
 declare global {
   namespace mp {
     interface MarkupParser {
-      opts: mp.ParserOptions;
+      opts: ParserOptions;
       parse(input: string): MarkupTree;
     }
 
@@ -41,10 +41,14 @@ declare global {
     }
 
     interface NodeOperator {
-      init(opts?: any) : ElementNode;
+      init() : ElementNode;
       add(p: ElementNode, c: MarkupNode): void;
-      addText(n: mp.ElementNode, text: string): void;
+      addText(n: ElementNode, text: string): void;
       traverse(n: ElementNode, order: "pre" | "post", callback: (n: MarkupNode) => void): void;
+    }
+
+    interface NodeTransform<T> {
+      transform(tree: mp.MarkupTree): T;
     }
   }
 }

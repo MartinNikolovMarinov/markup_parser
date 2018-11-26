@@ -1,7 +1,7 @@
 import { isElementNode } from './util';
 
 class NodeOperator implements mp.NodeOperator {
-  public init(opts?: any): mp.ElementNode {
+  public init(): mp.ElementNode {
     return {
       tagName: '',
       children: [],
